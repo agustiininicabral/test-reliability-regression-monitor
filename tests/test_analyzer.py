@@ -49,7 +49,7 @@ def test_parse_junit_rejects_invalid_durations(tmp_path):
             "</testsuite></testsuites>",
             encoding="utf-8",
         )
-        with pytest.raises(ValueError, match="duration"):
+        with pytest.raises(ValueError, match="[Dd]uration"):
             parse_junit(report)
 
 
