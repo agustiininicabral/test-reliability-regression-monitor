@@ -45,9 +45,14 @@ def main() -> int:
     print(f"Markdown report: {markdown_path}")
     print(f"HTML report: {html_path}")
 
-    delta = report["pass_rate_delta_percentage_points"]
+    delta = report["comparable_pass_rate_delta_percentage_points"]
+    comparison = "common tests"
+    if delta is None:
+        delta = report["pass_rate_delta_percentage_points"]
+        comparison = "all tests (no shared test inventory)"
+
     if args.fail_on_regression and delta is not None and delta < 0:
-        message = f"Regression detected: pass rate changed by {delta} percentage points."
+        message = f"Regression detected: pass rate for {comparison} changed by {delta} percentage points."
         print(message, file=sys.stderr)
         return 1
     return 0
