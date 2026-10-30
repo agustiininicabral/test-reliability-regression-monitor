@@ -186,9 +186,9 @@ rect { fill: #3478c8; }
 text { font: 12px system-ui, sans-serif; fill: #202124; }
 """
     return (
-        "<!doctype html>\n<html lang=\"en\">\n<head>\n"
-        "<meta charset=\"utf-8\">\n"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        '<!doctype html>\n<html lang="en">\n<head>\n'
+        '<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         "<title>Test Reliability Report</title>\n"
         f"<style>{styles}</style>\n</head>\n<body>\n"
         "<h1>Test Reliability Report</h1>\n"
