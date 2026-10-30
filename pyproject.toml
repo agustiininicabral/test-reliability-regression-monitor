@@ -1,0 +1,23 @@
+[project]
+name = "test-reliability-regression-monitor"
+version = "1.0.0"
+description = "Analyze pytest JUnit reports for flaky tests and regression trends."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9.0", "ruff>=0.8,<1.0"]
+
+[project.scripts]
+test-monitor = "monitor.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

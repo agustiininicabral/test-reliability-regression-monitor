@@ -1,0 +1,5 @@
+<testsuites><testsuite name="sample">
+  <testcase classname="checkout" name="test_payment" time="0.20"/>
+  <testcase classname="catalog" name="test_search" time="0.10"/>
+  <testcase classname="auth" name="test_login" time="0.15"/>
+</testsuite></testsuites>
