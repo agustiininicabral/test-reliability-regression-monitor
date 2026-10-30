@@ -84,3 +84,18 @@ def test_cli_rejects_missing_report(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as error:
         main()
     assert error.value.code == 2
+
+
+def test_cli_reports_malformed_junit_without_traceback(monkeypatch, tmp_path, capsys):
+    malformed = tmp_path / "malformed.xml"
+    malformed.write_text("<testsuites><testsuite>", encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["test-monitor", "--junit", str(malformed), "--db", str(tmp_path / "history.sqlite3")],
+    )
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 2
+    assert "Unable to process JUnit file" in capsys.readouterr().err

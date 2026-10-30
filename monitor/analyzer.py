@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import statistics
 import xml.etree.ElementTree as ET
 from collections import defaultdict
@@ -24,11 +25,24 @@ def parse_junit(path: str | Path) -> list[dict[str, Any]]:
             if skipped is not None
             else "passed"
         )
+        name = case.get("name", "unknown")
+        classname = case.get("classname", "")
+        raw_duration = case.get("time", "0") or "0"
+        try:
+            duration = float(raw_duration)
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid duration {raw_duration!r} for testcase {classname}::{name}"
+            ) from exc
+        if not math.isfinite(duration) or duration < 0:
+            raise ValueError(
+                f"Duration must be finite and non-negative for testcase {classname}::{name}"
+            )
         records.append(
             {
-                "name": case.get("name", "unknown"),
-                "classname": case.get("classname", ""),
-                "duration": float(case.get("time", "0") or 0),
+                "name": name,
+                "classname": classname,
+                "duration": duration,
                 "status": status,
                 "message": (
                     (failure.get("message") if failure is not None else None)

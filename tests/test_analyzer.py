@@ -1,3 +1,7 @@
+import xml.etree.ElementTree as ET
+
+import pytest
+
 from monitor.analyzer import (
     analyze_history,
     parse_junit,
@@ -37,6 +41,26 @@ def test_parse_junit_classifies_errors(tmp_path):
     records = parse_junit(report)
     assert records[0]["status"] == "failed"
     assert records[0]["message"] == "unexpected exception"
+
+
+def test_parse_junit_rejects_invalid_durations(tmp_path):
+    for value in ("-0.1", "nan", "inf", "-inf", "not-a-number"):
+        report = tmp_path / "invalid-duration.xml"
+        report.write_text(
+            f'<testsuites><testsuite><testcase classname="api" name="bad" time="{value}"/>'
+            "</testsuite></testsuites>",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="[Dd]uration"):
+            parse_junit(report)
+
+
+def test_parse_junit_rejects_malformed_xml(tmp_path):
+    report = tmp_path / "malformed.xml"
+    report.write_text("<testsuites><testsuite>", encoding="utf-8")
+
+    with pytest.raises(ET.ParseError):
+        parse_junit(report)
 
 
 def test_summary_calculates_pass_rate_and_duration():
