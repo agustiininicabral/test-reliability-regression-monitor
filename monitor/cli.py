@@ -22,7 +22,7 @@ def main() -> int:
     parser.add_argument(
         "--fail-on-regression",
         action="store_true",
-        help="Return exit code 1 if latest pass rate is lower than previous run",
+        help="Return exit code 1 if the comparable latest pass rate drops",
     )
     args = parser.parse_args()
 
