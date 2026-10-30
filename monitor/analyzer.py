@@ -160,8 +160,7 @@ def render_html(report: dict[str, Any]) -> str:
 
     flaky_items = (
         "".join(
-            f"<li><code>{html.escape(item['test'])}</code></li>"
-            for item in report["flaky_tests"]
+            f"<li><code>{html.escape(item['test'])}</code></li>" for item in report["flaky_tests"]
         )
         or "<li>None detected</li>"
     )
