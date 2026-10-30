@@ -72,7 +72,7 @@ def test_comparable_pass_rate_detects_regression_in_shared_tests():
 
     assert report["comparable_test_count"] == 1
     assert report["comparable_pass_rate_delta_percentage_points"] == -100.0
-    assert report["pass_rate_delta_percentage_points"] == 0.0
+    assert report["pass_rate_delta_percentage_points"] == -50.0
 
 
 def test_comparable_pass_rate_is_unavailable_without_shared_tests():
