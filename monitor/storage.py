@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 from typing import Any
 
@@ -16,38 +17,39 @@ def _connect(database: str | Path) -> sqlite3.Connection:
 
 
 def initialize_database(database: str | Path) -> None:
-    with _connect(database) as connection:
-        connection.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS test_runs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source TEXT NOT NULL,
-                fingerprint TEXT NOT NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                total INTEGER NOT NULL,
-                passed INTEGER NOT NULL,
-                failed INTEGER NOT NULL,
-                skipped INTEGER NOT NULL,
-                duration_total REAL NOT NULL,
-                UNIQUE(source, fingerprint)
-            );
+    with closing(_connect(database)) as connection:
+        with connection:
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS test_runs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source TEXT NOT NULL,
+                    fingerprint TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    total INTEGER NOT NULL,
+                    passed INTEGER NOT NULL,
+                    failed INTEGER NOT NULL,
+                    skipped INTEGER NOT NULL,
+                    duration_total REAL NOT NULL,
+                    UNIQUE(source, fingerprint)
+                );
 
-            CREATE TABLE IF NOT EXISTS test_results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                run_id INTEGER NOT NULL REFERENCES test_runs(id) ON DELETE CASCADE,
-                classname TEXT NOT NULL,
-                name TEXT NOT NULL,
-                status TEXT NOT NULL CHECK(status IN ('passed', 'failed', 'skipped')),
-                duration REAL NOT NULL,
-                message TEXT NOT NULL DEFAULT ''
-            );
+                CREATE TABLE IF NOT EXISTS test_results (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id INTEGER NOT NULL REFERENCES test_runs(id) ON DELETE CASCADE,
+                    classname TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK(status IN ('passed', 'failed', 'skipped')),
+                    duration REAL NOT NULL,
+                    message TEXT NOT NULL DEFAULT ''
+                );
 
-            CREATE INDEX IF NOT EXISTS idx_test_results_name
-                ON test_results(classname, name);
-            CREATE INDEX IF NOT EXISTS idx_test_results_run
-                ON test_results(run_id);
-            """
-        )
+                CREATE INDEX IF NOT EXISTS idx_test_results_name
+                    ON test_results(classname, name);
+                CREATE INDEX IF NOT EXISTS idx_test_results_run
+                    ON test_results(run_id);
+                """
+            )
 
 
 def save_run(
@@ -65,48 +67,49 @@ def save_run(
     }
     duration_total = sum(float(record["duration"]) for record in records)
 
-    with _connect(database) as connection:
-        existing = connection.execute(
-            "SELECT id FROM test_runs WHERE source = ? AND fingerprint = ?",
-            (source, fingerprint),
-        ).fetchone()
-        if existing:
-            return False
+    with closing(_connect(database)) as connection:
+        with connection:
+            existing = connection.execute(
+                "SELECT id FROM test_runs WHERE source = ? AND fingerprint = ?",
+                (source, fingerprint),
+            ).fetchone()
+            if existing:
+                return False
 
-        cursor = connection.execute(
-            """
-            INSERT INTO test_runs
-                (source, fingerprint, total, passed, failed, skipped, duration_total)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                source,
-                fingerprint,
-                len(records),
-                counts["passed"],
-                counts["failed"],
-                counts["skipped"],
-                duration_total,
-            ),
-        )
-        run_id = cursor.lastrowid
-        connection.executemany(
-            """
-            INSERT INTO test_results (run_id, classname, name, status, duration, message)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            [
+            cursor = connection.execute(
+                """
+                INSERT INTO test_runs
+                    (source, fingerprint, total, passed, failed, skipped, duration_total)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
                 (
-                    run_id,
-                    record["classname"],
-                    record["name"],
-                    record["status"],
-                    float(record["duration"]),
-                    record.get("message", ""),
-                )
-                for record in records
-            ],
-        )
+                    source,
+                    fingerprint,
+                    len(records),
+                    counts["passed"],
+                    counts["failed"],
+                    counts["skipped"],
+                    duration_total,
+                ),
+            )
+            run_id = cursor.lastrowid
+            connection.executemany(
+                """
+                INSERT INTO test_results (run_id, classname, name, status, duration, message)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        run_id,
+                        record["classname"],
+                        record["name"],
+                        record["status"],
+                        float(record["duration"]),
+                        record.get("message", ""),
+                    )
+                    for record in records
+                ],
+            )
     return True
 
 
@@ -114,7 +117,7 @@ def load_history(database: str | Path) -> list[list[dict[str, Any]]]:
     """Load persisted test runs in their insertion order, oldest first."""
     initialize_database(database)
     history: list[list[dict[str, Any]]] = []
-    with _connect(database) as connection:
+    with closing(_connect(database)) as connection:
         runs = connection.execute("SELECT id FROM test_runs ORDER BY id").fetchall()
         for run in runs:
             rows = connection.execute(

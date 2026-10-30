@@ -153,8 +153,8 @@ def render_html(report: dict[str, Any]) -> str:
         height = max(1, run["pass_rate"])
         y = 150 - height
         bars.append(
-            f'<rect x="{x}" y="{y:.2f}" width="42" height="{height:.2f}" '
-            f'rx="3"><title>Run {run["run"]}: {run["pass_rate"]:.2f}% pass rate</title></rect>'
+            f'<rect x="{x}" y="{y:.2f}" width="42" height="{height:.2f}" rx="3">'
+            f'<title>Run {run["run"]}: {run["pass_rate"]:.2f}% pass rate</title></rect>'
         )
         bars.append(
             f'<text x="{x + 21}" y="170" text-anchor="middle">R{run["run"]}</text>'
@@ -169,44 +169,53 @@ def render_html(report: dict[str, Any]) -> str:
     ) or "<li>None detected</li>"
     table_rows = "".join(rows) or '<tr><td colspan="7">No runs stored yet</td></tr>'
     current = report["current"] or {}
-    return f"""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Test Reliability Report</title>
-<style>
-body{{font:16px/1.5 system-ui,sans-serif;max-width:1050px;margin:2rem auto;padding:0 1rem;color:#202124}}
-h1,h2{{line-height:1.2}} .metrics{{display:flex;flex-wrap:wrap;gap:1rem}}
-.metrics div{{border:1px solid #ddd;border-radius:8px;padding:.8rem 1rem;min-width:110px}}
-table{{border-collapse:collapse;width:100%;margin:1rem 0}} th,td{{border:1px solid #ddd;padding:.55rem;text-align:left}}
-svg{{width:100%;max-width:650px;height:auto;border:1px solid #ddd;border-radius:8px}}
-rect{{fill:#3478c8}} text{{font:12px system-ui,sans-serif;fill:#202124}}
-</style>
-</head>
-<body>
-<h1>Test Reliability Report</h1>
-<section class="metrics">
-<div><strong>Latest pass rate</strong><br>{current.get("pass_rate", 0)}%</div>
-<div><strong>Total tests</strong><br>{current.get("total", 0)}</div>
-<div><strong>Failed</strong><br>{current.get("failed", 0)}</div>
-<div><strong>Pass-rate change</strong><br>{report["pass_rate_delta_percentage_points"]}</div>
-</section>
-<h2>Pass-rate trend</h2>
-<svg viewBox="0 0 {max(560, 110 + len(runs) * 78)} 190" role="img" aria-label="Pass rate by historical run">
-<line x1="40" y1="150" x2="{max(520, 90 + len(runs) * 78)}" y2="150" stroke="#777"/>
-<line x1="40" y1="50" x2="{max(520, 90 + len(runs) * 78)}" y2="50" stroke="#aaa" stroke-dasharray="4 4"/>
-<text x="5" y="54">100%</text><text x="12" y="154">0%</text>
-{"".join(bars)}
-</svg>
-<h2>Historical runs</h2>
-<table><thead><tr><th>Run</th><th>Total</th><th>Passed</th><th>Failed</th><th>Skipped</th><th>Pass rate</th><th>Duration (s)</th></tr></thead>
-<tbody>{table_rows}</tbody></table>
-<h2>Flaky test candidates</h2><ul>{flaky_items}</ul>
-<h2>Newly failing tests</h2><ul>{failing_items}</ul>
-<p>Flaky status is a heuristic: mixed pass/fail outcomes do not prove nondeterminism.</p>
-</body></html>
+    svg_width = max(560, 110 + len(runs) * 78)
+    axis_end = max(520, 90 + len(runs) * 78)
+    styles = """
+body { font: 16px/1.5 system-ui, sans-serif; max-width: 1050px;
+       margin: 2rem auto; padding: 0 1rem; color: #202124; }
+h1, h2 { line-height: 1.2; }
+.metrics { display: flex; flex-wrap: wrap; gap: 1rem; }
+.metrics div { border: 1px solid #ddd; border-radius: 8px;
+               padding: .8rem 1rem; min-width: 110px; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { border: 1px solid #ddd; padding: .55rem; text-align: left; }
+svg { width: 100%; max-width: 650px; height: auto;
+      border: 1px solid #ddd; border-radius: 8px; }
+rect { fill: #3478c8; }
+text { font: 12px system-ui, sans-serif; fill: #202124; }
 """
+    return (
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n"
+        "<meta charset=\"utf-8\">\n"
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        "<title>Test Reliability Report</title>\n"
+        f"<style>{styles}</style>\n</head>\n<body>\n"
+        "<h1>Test Reliability Report</h1>\n"
+        '<section class="metrics">\n'
+        f"<div><strong>Latest pass rate</strong><br>{current.get('pass_rate', 0)}%</div>\n"
+        f"<div><strong>Total tests</strong><br>{current.get('total', 0)}</div>\n"
+        f"<div><strong>Failed</strong><br>{current.get('failed', 0)}</div>\n"
+        "<div><strong>Pass-rate change</strong><br>"
+        f"{report['pass_rate_delta_percentage_points']}</div>\n"
+        "</section>\n<h2>Pass-rate trend</h2>\n"
+        f'<svg viewBox="0 0 {svg_width} 190" role="img" '
+        'aria-label="Pass rate by historical run">\n'
+        f'<line x1="40" y1="150" x2="{axis_end}" y2="150" stroke="#777"/>\n'
+        f'<line x1="40" y1="50" x2="{axis_end}" y2="50" '
+        'stroke="#aaa" stroke-dasharray="4 4"/>\n'
+        '<text x="5" y="54">100%</text><text x="12" y="154">0%</text>\n'
+        f"{''.join(bars)}\n</svg>\n"
+        "<h2>Historical runs</h2>\n"
+        "<table><thead><tr><th>Run</th><th>Total</th><th>Passed</th>"
+        "<th>Failed</th><th>Skipped</th><th>Pass rate</th><th>Duration (s)</th>"
+        "</tr></thead>\n"
+        f"<tbody>{table_rows}</tbody></table>\n"
+        f"<h2>Flaky test candidates</h2><ul>{flaky_items}</ul>\n"
+        f"<h2>Newly failing tests</h2><ul>{failing_items}</ul>\n"
+        "<p>Flaky status is a heuristic: mixed pass/fail outcomes do not prove "
+        "nondeterminism.</p>\n</body>\n</html>\n"
+    )
 
 
 def write_report(report: dict[str, Any], output_dir: str | Path) -> tuple[Path, Path, Path]:
