@@ -257,15 +257,15 @@ text { font: 12px system-ui, sans-serif; fill: #202124; }
         f"<div><strong>Latest pass rate</strong><br>{current.get('pass_rate', 0)}%</div>\n"
         f"<div><strong>Total tests</strong><br>{current.get('total', 0)}</div>\n"
         f"<div><strong>Failed</strong><br>{current.get('failed', 0)}</div>\n"
-        "<div><strong>Pass-rate change (all)</strong><br>\\n"
-        f"{report['pass_rate_delta_percentage_points']}</div>\\n"
-        "<div><strong>Pass-rate change (common)</strong><br>\\n"
-        f"{report['comparable_pass_rate_delta_percentage_points']}</div>\\n"
-        f"<div><strong>Comparable tests</strong><br>{report['comparable_test_count']}</div>\\n"
-        "</section>\\n<h2>Test inventory changes</h2>\\n"
+        "<div><strong>Pass-rate change (all)</strong><br>\n"
+        f"{report['pass_rate_delta_percentage_points']}</div>\n"
+        "<div><strong>Pass-rate change (common)</strong><br>\n"
+        f"{report['comparable_pass_rate_delta_percentage_points']}</div>\n"
+        f"<div><strong>Comparable tests</strong><br>{report['comparable_test_count']}</div>\n"
+        "</section>\n<h2>Test inventory changes</h2>\n"
         f"<p>Added: {len(report['inventory_changes']['added'])} · "
-        f"Removed: {len(report['inventory_changes']['removed'])}</p>\\n"
-        "<h2>Pass-rate trend</h2>\\n"
+        f"Removed: {len(report['inventory_changes']['removed'])}</p>\n"
+        "<h2>Pass-rate trend</h2>\n"
         f'<svg viewBox="0 0 {svg_width} 190" role="img" '
         'aria-label="Pass rate by historical run">\n'
         f'<line x1="40" y1="150" x2="{axis_end}" y2="150" stroke="#777"/>\n'
