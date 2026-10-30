@@ -52,7 +52,10 @@ def main() -> int:
         comparison = "all tests (no shared test inventory)"
 
     if args.fail_on_regression and delta is not None and delta < 0:
-        message = f"Regression detected: pass rate for {comparison} changed by {delta} percentage points."
+        message = (
+            f"Regression detected: pass rate for {comparison} changed by "
+            f"{delta} percentage points."
+        )
         print(message, file=sys.stderr)
         return 1
     return 0
