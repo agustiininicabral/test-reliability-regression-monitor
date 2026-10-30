@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from monitor.analyzer import analyze_history, parse_junit, write_report
@@ -32,8 +33,12 @@ def main() -> int:
         parser.error(f"JUnit file(s) not found: {', '.join(missing)}")
 
     for path in paths:
-        records = parse_junit(path)
-        inserted = save_run(args.db, str(path), records, path.read_bytes())
+        try:
+            records = parse_junit(path)
+            raw_xml = path.read_bytes()
+        except (ET.ParseError, ValueError, OSError) as exc:
+            parser.error(f"Unable to process JUnit file '{path}': {exc}")
+        inserted = save_run(args.db, str(path), records, raw_xml)
         state = "stored" if inserted else "already stored"
         print(f"{path}: {state}")
 
