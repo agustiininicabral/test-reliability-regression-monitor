@@ -12,6 +12,7 @@ A Python CLI that stores historical **JUnit XML** test results in SQLite and ana
 - Flag tests that passed and failed across supplied history.
 - Identify tests that previously passed and fail in the latest run.
 - Generate JSON, Markdown, and HTML reports, including a pass-rate chart.
+- Enforce a minimum 85% test coverage gate.
 - Optional non-zero exit code when the latest pass rate drops.
 
 ## Install (Windows PowerShell)
@@ -23,7 +24,7 @@ python -m pip install -e ".[dev]"
 python -m pip check
 ruff check monitor tests
 ruff format --check monitor tests
-pytest -v
+pytest -v --cov=monitor --cov-report=term-missing
 ```
 
 ## Analyze reports
@@ -60,7 +61,7 @@ A test is flagged as a flaky candidate when its supplied history contains at lea
 
 ## CI
 
-GitHub Actions runs tests, Ruff, dependency checks, and a deterministic historical-report demo. JUnit results, the SQLite database, and generated JSON/Markdown/HTML reports are uploaded as a workflow artifact for 14 days.
+GitHub Actions runs tests with an 85% coverage gate, Ruff, dependency checks, and a historical-report demo. JUnit results, coverage XML, the SQLite database, and generated JSON/Markdown/HTML reports are uploaded as a workflow artifact for 14 days.
 
 ## Limitations
 

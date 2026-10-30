@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from monitor.cli import main
 
 
@@ -46,3 +48,39 @@ def test_cli_persists_history_and_writes_all_report_formats(monkeypatch, tmp_pat
     assert "Pass-rate trend" in html_report
     assert "<svg" in html_report
     assert database.is_file()
+
+
+def test_cli_returns_zero_without_regression(monkeypatch, tmp_path):
+    first = tmp_path / "first.xml"
+    second = tmp_path / "second.xml"
+    passing_xml = (
+        '<testsuites><testsuite><testcase classname="api" name="test_ok" '
+        'time="0.1"/></testsuite></testsuites>'
+    )
+    first.write_text(passing_xml, encoding="utf-8")
+    second.write_text(passing_xml, encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "test-monitor",
+            "--junit",
+            str(first),
+            str(second),
+            "--db",
+            str(tmp_path / "history.sqlite3"),
+            "--out",
+            str(tmp_path / "out"),
+            "--fail-on-regression",
+        ],
+    )
+    assert main() == 0
+
+
+def test_cli_rejects_missing_report(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "sys.argv",
+        ["test-monitor", "--junit", str(tmp_path / "missing.xml")],
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2

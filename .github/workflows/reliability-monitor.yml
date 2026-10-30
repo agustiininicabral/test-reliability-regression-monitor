@@ -34,8 +34,8 @@ jobs:
         run: ruff check monitor tests
       - name: Format check
         run: ruff format --check monitor tests
-      - name: Unit tests
-        run: pytest -q --junitxml=reports/ci-run.xml
+      - name: Unit tests with coverage gate
+        run: pytest -q --cov=monitor --cov-report=term-missing --cov-report=xml --junitxml=reports/ci-run.xml
       - name: Analyze historical and current CI runs
         run: |
           python -m monitor.cli --junit examples/run-1.xml examples/run-2.xml reports/ci-run.xml --out reports/demo
@@ -43,6 +43,7 @@ jobs:
           test -f reports/demo/reliability-report.md
           test -f reports/demo/reliability-report.html
           test -f reports/history.sqlite3
+          test -f coverage.xml
       - name: Save historical SQLite database
         if: success()
         uses: actions/cache/save@v4
@@ -56,5 +57,6 @@ jobs:
           name: reliability-report
           path: |
             reports/
+            coverage.xml
           if-no-files-found: warn
           retention-days: 14

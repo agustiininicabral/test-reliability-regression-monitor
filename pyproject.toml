@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3,<9.0", "ruff>=0.8,<1.0"]
+dev = ["pytest>=8.3,<9.0", "pytest-cov>=5.0,<7.0", "ruff>=0.8,<1.0"]
 
 [project.scripts]
 test-monitor = "monitor.cli:main"
@@ -14,6 +14,14 @@ test-monitor = "monitor.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+
+[tool.coverage.run]
+branch = true
+source = ["monitor"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85
 
 [tool.ruff]
 line-length = 100
