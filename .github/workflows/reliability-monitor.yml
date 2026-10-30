@@ -19,6 +19,13 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Restore historical SQLite database
+        uses: actions/cache/restore@v4
+        with:
+          path: reports/history.sqlite3
+          key: reliability-history-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            reliability-history-
       - name: Install
         run: python -m pip install -e ".[dev]"
       - name: Dependency check
@@ -29,13 +36,19 @@ jobs:
         run: ruff format --check monitor tests
       - name: Unit tests
         run: pytest -q --junitxml=reports/ci-run.xml
-      - name: Analyze sample historical runs
+      - name: Analyze historical and current CI runs
         run: |
-          python -m monitor.cli --junit examples/run-1.xml examples/run-2.xml --out reports/demo
+          python -m monitor.cli --junit examples/run-1.xml examples/run-2.xml reports/ci-run.xml --out reports/demo
           test -f reports/demo/reliability-report.json
           test -f reports/demo/reliability-report.md
           test -f reports/demo/reliability-report.html
           test -f reports/history.sqlite3
+      - name: Save historical SQLite database
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: reports/history.sqlite3
+          key: reliability-history-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Upload reliability evidence
         if: always()
         uses: actions/upload-artifact@v4

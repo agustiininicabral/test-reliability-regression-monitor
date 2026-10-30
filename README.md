@@ -48,13 +48,11 @@ Specify a different database with `--db`:
 python -m monitor.cli --junit reports/current.xml --db reports/team-history.sqlite3 --out reports/latest
 ```
 
-The database is persistent across executions. New report files are appended to the history; the same source file with unchanged content is not imported twice. Keep the input files in chronological order when importing historical batches.
+The database is persistent across local executions. New report files are appended to the history; the same source file with unchanged content is not imported twice. Keep input files in chronological order when importing historical batches.
 
-Fail the command when the latest pass rate is lower than the previous run:
+## CI history
 
-```powershell
-python -m monitor.cli --junit reports/current.xml --fail-on-regression
-```
+GitHub Actions restores and updates a SQLite history database through the Actions cache on the main branch. Each workflow execution adds its current JUnit result to the history, compares it with previous runs, and uploads the database and generated reports as a 14-day artifact. GitHub cache entries can expire when unused, so download the artifact if you need a durable archive outside the cache lifecycle.
 
 ## Flaky-test interpretation
 
