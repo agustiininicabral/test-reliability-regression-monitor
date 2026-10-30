@@ -161,8 +161,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "| Run | Total | Passed | Failed | Skipped | Pass rate | Duration (s) |",
         "|---:|---:|---:|---:|---:|---:|---:|",
-
-    ]
+    ])
     for run in report["runs"]:
         lines.append(
             f"| {run['run']} | {run['total']} | {run['passed']} | {run['failed']} | "
