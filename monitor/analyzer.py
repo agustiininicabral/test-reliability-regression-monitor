@@ -154,19 +154,24 @@ def render_html(report: dict[str, Any]) -> str:
         y = 150 - height
         bars.append(
             f'<rect x="{x}" y="{y:.2f}" width="42" height="{height:.2f}" rx="3">'
-            f'<title>Run {run["run"]}: {run["pass_rate"]:.2f}% pass rate</title></rect>'
+            f"<title>Run {run['run']}: {run['pass_rate']:.2f}% pass rate</title></rect>"
         )
-        bars.append(
-            f'<text x="{x + 21}" y="170" text-anchor="middle">R{run["run"]}</text>'
-        )
+        bars.append(f'<text x="{x + 21}" y="170" text-anchor="middle">R{run["run"]}</text>')
 
-    flaky_items = "".join(
-        f"<li><code>{html.escape(item['test'])}</code></li>" for item in report["flaky_tests"]
-    ) or "<li>None detected</li>"
-    failing_items = "".join(
-        f"<li><code>{html.escape(item['test'])}</code></li>"
-        for item in report["newly_failing_tests"]
-    ) or "<li>None detected</li>"
+    flaky_items = (
+        "".join(
+            f"<li><code>{html.escape(item['test'])}</code></li>"
+            for item in report["flaky_tests"]
+        )
+        or "<li>None detected</li>"
+    )
+    failing_items = (
+        "".join(
+            f"<li><code>{html.escape(item['test'])}</code></li>"
+            for item in report["newly_failing_tests"]
+        )
+        or "<li>None detected</li>"
+    )
     table_rows = "".join(rows) or '<tr><td colspan="7">No runs stored yet</td></tr>'
     current = report["current"] or {}
     svg_width = max(560, 110 + len(runs) * 78)
