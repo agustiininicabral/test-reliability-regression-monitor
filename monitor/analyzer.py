@@ -57,21 +57,33 @@ def summarize(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
-    """Compare ordered test runs (oldest to newest) and flag failures after prior passes."""
+    """Compare ordered runs and flag tests that fail in the latest run after a prior pass."""
     flattened: dict[str, list[str]] = defaultdict(list)
+    previous_statuses: dict[str, list[str]] = defaultdict(list)
+    latest_statuses: dict[str, list[str]] = defaultdict(list)
     run_summaries = []
+
     for index, run in enumerate(history, start=1):
         run_summaries.append({"run": index, **summarize(run)})
         for record in run:
             key = f"{record['classname']}::{record['name']}"
             flattened[key].append(record["status"])
+            if index == len(history):
+                latest_statuses[key].append(record["status"])
+            else:
+                previous_statuses[key].append(record["status"])
 
     flaky = []
     newly_failing = []
     for test_name, statuses in flattened.items():
         if "passed" in statuses and "failed" in statuses:
             flaky.append({"test": test_name, "statuses": statuses})
-        if len(statuses) >= 2 and statuses[-1] == "failed" and "passed" in statuses[:-1]:
+        # A test must be present and failing in the actual latest run. Its last
+        # observed result in an older run is not evidence of a current failure.
+        if (
+            "failed" in latest_statuses.get(test_name, [])
+            and "passed" in previous_statuses.get(test_name, [])
+        ):
             newly_failing.append({"test": test_name, "statuses": statuses})
 
     previous = run_summaries[-2] if len(run_summaries) >= 2 else None
@@ -129,8 +141,9 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             "## Interpretation",
             "A flaky candidate has both passed and failed across supplied runs. "
-            "This heuristic is not proof of nondeterminism; environment changes, "
-            "test data, and real regressions can produce the same pattern.",
+            "A newly failing test must be present and fail in the latest run after passing "
+            "in at least one earlier run. These are diagnostic heuristics, not proof of "
+            "nondeterminism or root cause.",
             "",
         ]
     )
