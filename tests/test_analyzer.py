@@ -1,3 +1,7 @@
+import xml.etree.ElementTree as ET
+
+import pytest
+
 from monitor.analyzer import (
     analyze_history,
     parse_junit,
@@ -40,8 +44,6 @@ def test_parse_junit_classifies_errors(tmp_path):
 
 
 def test_parse_junit_rejects_invalid_durations(tmp_path):
-    import pytest
-
     for value in ("-0.1", "nan", "inf", "-inf", "not-a-number"):
         report = tmp_path / "invalid-duration.xml"
         report.write_text(
@@ -54,9 +56,6 @@ def test_parse_junit_rejects_invalid_durations(tmp_path):
 
 
 def test_parse_junit_rejects_malformed_xml(tmp_path):
-    import pytest
-    import xml.etree.ElementTree as ET
-
     report = tmp_path / "malformed.xml"
     report.write_text("<testsuites><testsuite>", encoding="utf-8")
 
