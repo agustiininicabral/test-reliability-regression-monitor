@@ -13,7 +13,7 @@ A Python CLI that stores historical **JUnit XML** test results in SQLite and ana
 - Identify tests that previously passed and fail in the latest run.
 - Generate JSON, Markdown, and HTML reports, including a pass-rate chart.
 - Enforce a minimum 85% test coverage gate.
-- Optional non-zero exit code when the latest pass rate drops.
+- Optional non-zero exit code when the comparable pass rate drops (falling back to the overall rate when no tests are shared between the latest runs).
 
 ## Install (Windows PowerShell)
 
@@ -70,7 +70,7 @@ GitHub Actions runs tests with an 85% coverage gate, Ruff, dependency checks, an
 - Re-importing the same path and identical file content is ignored.
 - JUnit XML variations outside the common `testsuite(s)/testcase` structure may require parser extensions.
 - The sample XML files are synthetic demonstration data, not production test evidence.
-- Pass-rate regression compares the latest two stored run summaries; it does not normalize for changing test inventories.
+- Pass-rate reporting includes both the overall change and a comparable change calculated only from tests present in both of the latest two runs. Added and removed tests are reported separately. If there are no shared tests, the comparable delta is unavailable; `--fail-on-regression` falls back to the overall delta.
 
 ## License
 
