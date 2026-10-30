@@ -39,6 +39,31 @@ def test_parse_junit_classifies_errors(tmp_path):
     assert records[0]["message"] == "unexpected exception"
 
 
+def test_parse_junit_rejects_invalid_durations(tmp_path):
+    import pytest
+
+    for value in ("-0.1", "nan", "inf", "-inf", "not-a-number"):
+        report = tmp_path / "invalid-duration.xml"
+        report.write_text(
+            f'<testsuites><testsuite><testcase classname="api" name="bad" time="{value}"/>'
+            "</testsuite></testsuites>",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="duration"):
+            parse_junit(report)
+
+
+def test_parse_junit_rejects_malformed_xml(tmp_path):
+    import pytest
+    import xml.etree.ElementTree as ET
+
+    report = tmp_path / "malformed.xml"
+    report.write_text("<testsuites><testsuite>", encoding="utf-8")
+
+    with pytest.raises(ET.ParseError):
+        parse_junit(report)
+
+
 def test_summary_calculates_pass_rate_and_duration():
     records = [
         {"status": "passed", "duration": 0.2},
