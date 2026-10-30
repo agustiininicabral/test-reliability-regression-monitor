@@ -53,8 +53,7 @@ def main() -> int:
 
     if args.fail_on_regression and delta is not None and delta < 0:
         message = (
-            f"Regression detected: pass rate for {comparison} changed by "
-            f"{delta} percentage points."
+            f"Regression detected: pass rate for {comparison} changed by {delta} percentage points."
         )
         print(message, file=sys.stderr)
         return 1
