@@ -90,11 +90,46 @@ def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
     pass_rate_delta = (
         round(current["pass_rate"] - previous["pass_rate"], 2) if previous and current else None
     )
+
+    inventory_changes = {"added": [], "removed": []}
+    comparable_test_count = 0
+    comparable_pass_rate_delta = None
+    if len(history) >= 2:
+        previous_records = {
+            f"{record['classname']}::{record['name']}": record for record in history[-2]
+        }
+        latest_records = {
+            f"{record['classname']}::{record['name']}": record for record in history[-1]
+        }
+        previous_names = set(previous_records)
+        latest_names = set(latest_records)
+        inventory_changes = {
+            "added": sorted(latest_names - previous_names),
+            "removed": sorted(previous_names - latest_names),
+        }
+        common_names = previous_names & latest_names
+        comparable_test_count = len(common_names)
+        if common_names:
+            previous_rate = (
+                sum(previous_records[name]["status"] == "passed" for name in common_names)
+                / comparable_test_count
+                * 100
+            )
+            latest_rate = (
+                sum(latest_records[name]["status"] == "passed" for name in common_names)
+                / comparable_test_count
+                * 100
+            )
+            comparable_pass_rate_delta = round(latest_rate - previous_rate, 2)
+
     return {
         "runs": run_summaries,
         "flaky_tests": flaky,
         "newly_failing_tests": newly_failing,
         "pass_rate_delta_percentage_points": pass_rate_delta,
+        "inventory_changes": inventory_changes,
+        "comparable_test_count": comparable_test_count,
+        "comparable_pass_rate_delta_percentage_points": comparable_pass_rate_delta,
         "current": current,
         "previous": previous,
     }
@@ -111,13 +146,30 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Failed: **{current.get('failed', 0)}**",
         f"- Skipped: **{current.get('skipped', 0)}**",
         f"- Pass rate: **{current.get('pass_rate', 0)}%**",
-        f"- Pass-rate change: **{report['pass_rate_delta_percentage_points']} percentage points**",
+        f"- Pass-rate change (all tests): "
+        f"**{report['pass_rate_delta_percentage_points']} percentage points**",
+        f"- Pass-rate change (common tests): "
+        f"**{report['comparable_pass_rate_delta_percentage_points']} percentage points**",
+        f"- Comparable tests: **{report['comparable_test_count']}**",
         "",
-        "## Run history",
+        "## Test inventory changes",
         "",
-        "| Run | Total | Passed | Failed | Skipped | Pass rate | Duration (s) |",
-        "|---:|---:|---:|---:|---:|---:|---:|",
     ]
+    if report["inventory_changes"]["added"]:
+        lines.extend(f"- Added: `{name}`" for name in report["inventory_changes"]["added"])
+    if report["inventory_changes"]["removed"]:
+        lines.extend(f"- Removed: `{name}`" for name in report["inventory_changes"]["removed"])
+    if not any(report["inventory_changes"].values()):
+        lines.append("No test inventory changes between the latest two runs.")
+    lines.extend(
+        [
+            "",
+            "## Run history",
+            "",
+            "| Run | Total | Passed | Failed | Skipped | Pass rate | Duration (s) |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
     for run in report["runs"]:
         lines.append(
             f"| {run['run']} | {run['total']} | {run['passed']} | {run['failed']} | "
@@ -212,9 +264,15 @@ text { font: 12px system-ui, sans-serif; fill: #202124; }
         f"<div><strong>Latest pass rate</strong><br>{current.get('pass_rate', 0)}%</div>\n"
         f"<div><strong>Total tests</strong><br>{current.get('total', 0)}</div>\n"
         f"<div><strong>Failed</strong><br>{current.get('failed', 0)}</div>\n"
-        "<div><strong>Pass-rate change</strong><br>"
+        "<div><strong>Pass-rate change (all)</strong><br>\n"
         f"{report['pass_rate_delta_percentage_points']}</div>\n"
-        "</section>\n<h2>Pass-rate trend</h2>\n"
+        "<div><strong>Pass-rate change (common)</strong><br>\n"
+        f"{report['comparable_pass_rate_delta_percentage_points']}</div>\n"
+        f"<div><strong>Comparable tests</strong><br>{report['comparable_test_count']}</div>\n"
+        "</section>\n<h2>Test inventory changes</h2>\n"
+        f"<p>Added: {len(report['inventory_changes']['added'])} · "
+        f"Removed: {len(report['inventory_changes']['removed'])}</p>\n"
+        "<h2>Pass-rate trend</h2>\n"
         f'<svg viewBox="0 0 {svg_width} 190" role="img" '
         'aria-label="Pass rate by historical run">\n'
         f'<line x1="40" y1="150" x2="{axis_end}" y2="150" stroke="#777"/>\n'
