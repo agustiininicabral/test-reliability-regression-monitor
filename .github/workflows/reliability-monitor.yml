@@ -34,6 +34,8 @@ jobs:
           python -m monitor.cli --junit examples/run-1.xml examples/run-2.xml --out reports/demo
           test -f reports/demo/reliability-report.json
           test -f reports/demo/reliability-report.md
+          test -f reports/demo/reliability-report.html
+          test -f reports/history.sqlite3
       - name: Upload reliability evidence
         if: always()
         uses: actions/upload-artifact@v4
