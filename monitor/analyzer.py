@@ -80,9 +80,8 @@ def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
             flaky.append({"test": test_name, "statuses": statuses})
         # A test must be present and failing in the actual latest run. Its last
         # observed result in an older run is not evidence of a current failure.
-        if (
-            "failed" in latest_statuses.get(test_name, [])
-            and "passed" in previous_statuses.get(test_name, [])
+        if "failed" in latest_statuses.get(test_name, []) and "passed" in previous_statuses.get(
+            test_name, []
         ):
             newly_failing.append({"test": test_name, "statuses": statuses})
 
