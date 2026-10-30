@@ -34,12 +34,36 @@ def test_summary_calculates_pass_rate_and_duration():
 
 def test_detects_flaky_candidate_and_new_failure():
     first = [
-        {"classname": "suite", "name": "stable", "status": "passed", "duration": 0.1, "message": ""},
-        {"classname": "suite", "name": "flaky", "status": "passed", "duration": 0.1, "message": ""},
+        {
+            "classname": "suite",
+            "name": "stable",
+            "status": "passed",
+            "duration": 0.1,
+            "message": "",
+        },
+        {
+            "classname": "suite",
+            "name": "flaky",
+            "status": "passed",
+            "duration": 0.1,
+            "message": "",
+        },
     ]
     second = [
-        {"classname": "suite", "name": "stable", "status": "failed", "duration": 0.1, "message": "x"},
-        {"classname": "suite", "name": "flaky", "status": "failed", "duration": 0.1, "message": "x"},
+        {
+            "classname": "suite",
+            "name": "stable",
+            "status": "failed",
+            "duration": 0.1,
+            "message": "x",
+        },
+        {
+            "classname": "suite",
+            "name": "flaky",
+            "status": "failed",
+            "duration": 0.1,
+            "message": "x",
+        },
     ]
     report = analyze_history([first, second])
     assert len(report["flaky_tests"]) == 2

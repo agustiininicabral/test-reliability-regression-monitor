@@ -16,8 +16,10 @@ def parse_junit(path: str | Path) -> list[dict[str, Any]]:
         failure = case.find("failure")
         error = case.find("error")
         skipped = case.find("skipped")
-        status = "failed" if failure is not None or error is not None else (
-            "skipped" if skipped is not None else "passed"
+        status = (
+            "failed"
+            if failure is not None or error is not None
+            else "skipped" if skipped is not None else "passed"
         )
         records.append(
             {
@@ -101,7 +103,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         "## Flaky test candidates",
     ]
     if report["flaky_tests"]:
-        lines.extend(f'- `{item["test"]}`: {", ".join(item["statuses"])}' for item in report["flaky_tests"])
+        lines.extend(
+            f'- `{item["test"]}`: {", ".join(item["statuses"])}'
+            for item in report["flaky_tests"]
+        )
     else:
         lines.append("No flaky candidates detected in the supplied history.")
     lines.extend(["", "## Newly failing tests"])
