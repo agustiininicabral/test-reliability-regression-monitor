@@ -142,8 +142,10 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Failed: **{current.get('failed', 0)}**",
         f"- Skipped: **{current.get('skipped', 0)}**",
         f"- Pass rate: **{current.get('pass_rate', 0)}%**",
-        f"- Pass-rate change (all tests): **{report['pass_rate_delta_percentage_points']} percentage points**",
-        f"- Pass-rate change (common tests): **{report['comparable_pass_rate_delta_percentage_points']} percentage points**",
+        f"- Pass-rate change (all tests): "
+        f"**{report['pass_rate_delta_percentage_points']} percentage points**",
+        f"- Pass-rate change (common tests): "
+        f"**{report['comparable_pass_rate_delta_percentage_points']} percentage points**",
         f"- Comparable tests: **{report['comparable_test_count']}**",
         "",
         "## Test inventory changes",
