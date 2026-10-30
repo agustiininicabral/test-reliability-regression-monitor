@@ -110,12 +110,16 @@ def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
         common_names = previous_names & latest_names
         comparable_test_count = len(common_names)
         if common_names:
-            previous_rate = sum(
-                previous_records[name]["status"] == "passed" for name in common_names
-            ) / comparable_test_count * 100
-            latest_rate = sum(
-                latest_records[name]["status"] == "passed" for name in common_names
-            ) / comparable_test_count * 100
+            previous_rate = (
+                sum(previous_records[name]["status"] == "passed" for name in common_names)
+                / comparable_test_count
+                * 100
+            )
+            latest_rate = (
+                sum(latest_records[name]["status"] == "passed" for name in common_names)
+                / comparable_test_count
+                * 100
+            )
             comparable_pass_rate_delta = round(latest_rate - previous_rate, 2)
 
     return {
@@ -157,13 +161,15 @@ def render_markdown(report: dict[str, Any]) -> str:
         lines.extend(f"- Removed: `{name}`" for name in report["inventory_changes"]["removed"])
     if not any(report["inventory_changes"].values()):
         lines.append("No test inventory changes between the latest two runs.")
-    lines.extend([
-        "",
-        "## Run history",
-        "",
-        "| Run | Total | Passed | Failed | Skipped | Pass rate | Duration (s) |",
-        "|---:|---:|---:|---:|---:|---:|---:|",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Run history",
+            "",
+            "| Run | Total | Passed | Failed | Skipped | Pass rate | Duration (s) |",
+            "|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
     for run in report["runs"]:
         lines.append(
             f"| {run['run']} | {run['total']} | {run['passed']} | {run['failed']} | "
