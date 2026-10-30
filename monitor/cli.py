@@ -11,9 +11,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Analyze one or more JUnit XML reports (oldest run first)."
     )
-    parser.add_argument(
-        "--junit", nargs="+", required=True, help="JUnit XML files, oldest first"
-    )
+    parser.add_argument("--junit", nargs="+", required=True, help="JUnit XML files, oldest first")
     parser.add_argument("--out", default="reports/latest", help="Output directory")
     parser.add_argument(
         "--fail-on-regression",

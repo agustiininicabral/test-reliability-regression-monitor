@@ -19,7 +19,9 @@ def parse_junit(path: str | Path) -> list[dict[str, Any]]:
         status = (
             "failed"
             if failure is not None or error is not None
-            else "skipped" if skipped is not None else "passed"
+            else "skipped"
+            if skipped is not None
+            else "passed"
         )
         records.append(
             {
@@ -60,7 +62,7 @@ def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
     for index, run in enumerate(history, start=1):
         run_summaries.append({"run": index, **summarize(run)})
         for record in run:
-            key = f'{record["classname"]}::{record["name"]}'
+            key = f"{record['classname']}::{record['name']}"
             flattened[key].append(record["status"])
 
     flaky = []
@@ -74,9 +76,7 @@ def analyze_history(history: list[list[dict[str, Any]]]) -> dict[str, Any]:
     previous = run_summaries[-2] if len(run_summaries) >= 2 else None
     current = run_summaries[-1] if run_summaries else None
     pass_rate_delta = (
-        round(current["pass_rate"] - previous["pass_rate"], 2)
-        if previous and current
-        else None
+        round(current["pass_rate"] - previous["pass_rate"], 2) if previous and current else None
     )
     return {
         "runs": run_summaries,
@@ -93,25 +93,24 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Test Reliability Report",
         "",
-        f'- Latest run: **{current.get("run", "n/a")}**',
-        f'- Total tests: **{current.get("total", 0)}**',
-        f'- Passed: **{current.get("passed", 0)}**',
-        f'- Failed: **{current.get("failed", 0)}**',
-        f'- Skipped: **{current.get("skipped", 0)}**',
-        f'- Pass rate: **{current.get("pass_rate", 0)}%**',
+        f"- Latest run: **{current.get('run', 'n/a')}**",
+        f"- Total tests: **{current.get('total', 0)}**",
+        f"- Passed: **{current.get('passed', 0)}**",
+        f"- Failed: **{current.get('failed', 0)}**",
+        f"- Skipped: **{current.get('skipped', 0)}**",
+        f"- Pass rate: **{current.get('pass_rate', 0)}%**",
         "",
         "## Flaky test candidates",
     ]
     if report["flaky_tests"]:
         lines.extend(
-            f'- `{item["test"]}`: {", ".join(item["statuses"])}'
-            for item in report["flaky_tests"]
+            f"- `{item['test']}`: {', '.join(item['statuses'])}" for item in report["flaky_tests"]
         )
     else:
         lines.append("No flaky candidates detected in the supplied history.")
     lines.extend(["", "## Newly failing tests"])
     if report["newly_failing_tests"]:
-        lines.extend(f'- `{item["test"]}`' for item in report["newly_failing_tests"])
+        lines.extend(f"- `{item['test']}`" for item in report["newly_failing_tests"])
     else:
         lines.append("No newly failing tests detected.")
     lines.extend(
