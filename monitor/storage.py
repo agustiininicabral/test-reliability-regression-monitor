@@ -72,9 +72,10 @@ def save_run(
         with connection:
             cursor = connection.execute(
                 """
-                INSERT OR IGNORE INTO test_runs
+                INSERT INTO test_runs
                     (source, fingerprint, total, passed, failed, skipped, duration_total)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(source, fingerprint) DO NOTHING
                 """,
                 (
                     source,
