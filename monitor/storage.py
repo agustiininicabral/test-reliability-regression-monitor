@@ -10,7 +10,8 @@ from typing import Any
 def _connect(database: str | Path) -> sqlite3.Connection:
     path = Path(database)
     path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(path, timeout=30)
+    connection.execute("PRAGMA busy_timeout = 30000")
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
@@ -69,16 +70,9 @@ def save_run(
 
     with closing(_connect(database)) as connection:
         with connection:
-            existing = connection.execute(
-                "SELECT id FROM test_runs WHERE source = ? AND fingerprint = ?",
-                (source, fingerprint),
-            ).fetchone()
-            if existing:
-                return False
-
             cursor = connection.execute(
                 """
-                INSERT INTO test_runs
+                INSERT OR IGNORE INTO test_runs
                     (source, fingerprint, total, passed, failed, skipped, duration_total)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -92,6 +86,9 @@ def save_run(
                     duration_total,
                 ),
             )
+            if cursor.rowcount == 0:
+                return False
+
             run_id = cursor.lastrowid
             connection.executemany(
                 """
