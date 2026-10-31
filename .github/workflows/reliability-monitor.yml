@@ -26,7 +26,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Restore historical SQLite database
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: reports/history.sqlite3
           key: reliability-history-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -48,7 +48,7 @@ jobs:
           python -c "from pathlib import Path; required = ['reports/demo/reliability-report.json', 'reports/demo/reliability-report.md', 'reports/demo/reliability-report.html', 'reports/history.sqlite3', 'coverage.xml']; missing = [item for item in required if not Path(item).is_file()]; assert not missing, f'Missing expected files: {missing}'"
       - name: Save historical SQLite database
         if: success()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: reports/history.sqlite3
           key: reliability-history-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
