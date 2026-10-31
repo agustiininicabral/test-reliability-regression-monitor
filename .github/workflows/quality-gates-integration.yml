@@ -1,0 +1,87 @@
+name: Quality Gates Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gates-to-reliability:
+    name: Quality Gates API tests / Python 3.12
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out reliability monitor
+        uses: actions/checkout@v4
+
+      - name: Check out Quality Gates project
+        uses: actions/checkout@v4
+        with:
+          repository: agustiininicabral/continuous-testing-quality-gates
+          path: quality-gates
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Restore Quality Gates test history
+        uses: actions/cache/restore@v4
+        with:
+          path: reports/quality-gates-history.sqlite3
+          key: quality-gates-history-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            quality-gates-history-
+
+      - name: Install reliability monitor
+        run: python -m pip install -e ".[dev]"
+
+      - name: Install Quality Gates test dependencies
+        working-directory: quality-gates
+        run: python -m pip install -e ".[dev]"
+
+      - name: Check dependency consistency
+        run: python -m pip check
+
+      - name: Run Quality Gates test suite and produce JUnit evidence
+        working-directory: quality-gates
+        run: >-
+          pytest
+          --cov=src
+          --cov-report=term-missing
+          --cov-report=xml:../reports/quality-gates-coverage.xml
+          --junitxml=../reports/quality-gates-${{ github.run_id }}.xml
+
+      - name: Analyze Quality Gates history
+        run: >-
+          python -m monitor.cli
+          --junit reports/quality-gates-${{ github.run_id }}.xml
+          --db reports/quality-gates-history.sqlite3
+          --out reports/quality-gates-integration
+          --fail-on-regression
+
+      - name: Save Quality Gates test history
+        if: always() && github.event_name != 'pull_request' && hashFiles('reports/quality-gates-history.sqlite3') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: reports/quality-gates-history.sqlite3
+          key: quality-gates-history-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload integrated quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gates-reliability-${{ github.run_id }}
+          path: |
+            reports/quality-gates-*.xml
+            reports/quality-gates-history.sqlite3
+            reports/quality-gates-integration/
+          if-no-files-found: warn
+          retention-days: 14
