@@ -31,6 +31,26 @@ def test_parse_junit_classifies_pass_fail_skip(tmp_path):
     assert records[1]["message"] == "assertion failed"
 
 
+def test_parse_junit_supports_namespaces_and_failure_text(tmp_path):
+    report = tmp_path / "namespaced.xml"
+    report.write_text(
+        """<j:testsuites xmlns:j="urn:junit">
+        <j:testsuite>
+          <j:testcase classname="api" name="test_error" time="0.2">
+            <j:failure>assertion details</j:failure>
+          </j:testcase>
+          <j:testcase classname="api" name="test_ok" time="0.1" />
+        </j:testsuite>
+        </j:testsuites>""",
+        encoding="utf-8",
+    )
+
+    records = parse_junit(report)
+
+    assert [record["status"] for record in records] == ["failed", "passed"]
+    assert records[0]["message"] == "assertion details"
+
+
 def test_parse_junit_classifies_errors(tmp_path):
     report = tmp_path / "error.xml"
     report.write_text(

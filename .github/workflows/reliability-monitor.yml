@@ -12,17 +12,18 @@ permissions:
 
 jobs:
   tests-and-demo:
-    name: ${{ matrix.os }} / Python 3.12
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Restore historical SQLite database
         uses: actions/cache/restore@v4

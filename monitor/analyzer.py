@@ -10,14 +10,22 @@ from pathlib import Path
 from typing import Any
 
 
+def _local_name(tag: str) -> str:
+    """Return an XML local name, including for namespace-qualified tags."""
+    return tag.rsplit("}", 1)[-1]
+
+
 def parse_junit(path: str | Path) -> list[dict[str, Any]]:
-    """Parse a JUnit XML file into normalized test case records."""
+    """Parse common JUnit XML layouts into normalized test case records."""
     root = ET.parse(path).getroot()
     records: list[dict[str, Any]] = []
-    for case in root.iter("testcase"):
-        failure = case.find("failure")
-        error = case.find("error")
-        skipped = case.find("skipped")
+    for case in root.iter():
+        if _local_name(case.tag) != "testcase":
+            continue
+        children = {_local_name(child.tag): child for child in case}
+        failure = children.get("failure")
+        error = children.get("error")
+        skipped = children.get("skipped")
         status = (
             "failed"
             if failure is not None or error is not None
@@ -47,7 +55,13 @@ def parse_junit(path: str | Path) -> list[dict[str, Any]]:
                 "message": (
                     (failure.get("message") if failure is not None else None)
                     or (error.get("message") if error is not None else None)
-                    or ""
+                    or (
+                        (failure.text or "").strip()
+                        if failure is not None
+                        else (error.text or "").strip()
+                        if error is not None
+                        else ""
+                    )
                 ),
             }
         )

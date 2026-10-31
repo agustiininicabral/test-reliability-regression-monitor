@@ -63,6 +63,13 @@ A test is flagged as a flaky candidate when its supplied history contains at lea
 
 GitHub Actions runs tests with an 85% coverage gate, Ruff, dependency checks, and a historical-report demo. JUnit results, coverage XML, the SQLite database, and generated JSON/Markdown/HTML reports are uploaded as a workflow artifact for 14 days.
 
+## Security and maintenance
+
+- GitHub Actions runs with read-only repository contents permissions.
+- CodeQL analyzes the Python code on pushes, pull requests, and a weekly schedule.
+- Dependabot checks Python dependencies and GitHub Actions updates weekly.
+- CI validates Python 3.11 and 3.12 on Ubuntu and Windows.
+
 ## Limitations
 
 - The tool analyzes reports; it does not execute tests itself.
