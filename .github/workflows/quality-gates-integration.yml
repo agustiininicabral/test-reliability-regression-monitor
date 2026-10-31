@@ -50,6 +50,9 @@ jobs:
       - name: Check dependency consistency
         run: python -m pip check
 
+      - name: Prepare evidence directory
+        run: python -c "from pathlib import Path; Path('reports').mkdir(exist_ok=True)"
+
       - name: Run Quality Gates test suite and produce JUnit evidence
         working-directory: quality-gates
         run: >-
@@ -60,6 +63,7 @@ jobs:
           --junitxml=../reports/quality-gates-${{ github.run_id }}.xml
 
       - name: Analyze Quality Gates history
+        if: always() && hashFiles('reports/quality-gates-*.xml') != ''
         run: >-
           python -m monitor.cli
           --junit reports/quality-gates-${{ github.run_id }}.xml
