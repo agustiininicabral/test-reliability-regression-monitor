@@ -55,6 +55,44 @@ The database is persistent across local executions. New report files are appende
 
 GitHub Actions restores and updates a SQLite history database through the Actions cache on the main branch. Each workflow execution adds its current JUnit result to the history, compares it with previous runs, and uploads the database and generated reports as a 14-day artifact. GitHub cache entries can expire when unused, so download the artifact if you need a durable archive outside the cache lifecycle.
 
+
+## End-to-end integration with Quality Gates
+
+The `quality-gates-integration.yml` workflow checks out the companion
+[`continuous-testing-quality-gates`](https://github.com/agustiininicabral/continuous-testing-quality-gates)
+repository, installs both projects, runs the API project's complete pytest suite,
+and writes its JUnit XML and coverage evidence. The monitor imports that JUnit
+report into a dedicated SQLite history, compares it with prior runs, and
+generates JSON, Markdown, and HTML reliability reports.
+
+The integration workflow runs on pushes and pull requests to this repository,
+on manual dispatch, and daily. It retains history through the GitHub Actions
+cache and uploads evidence as a 14-day artifact. The cache is an operational
+convenience, not permanent storage; download the artifact for durable records.
+Pull-request runs do not update the shared history cache.
+
+On the first successful run, there is no prior Quality Gates run to compare.
+Regression detection becomes meaningful after at least two distinct runs have
+been recorded. A lower comparable pass rate fails the integration workflow.
+Investigate the failing test and its logs before attributing a root cause.
+
+To run the same flow locally from the monitor repository root:
+
+```powershell
+python -m pip install -e ".[dev]"
+git clone https://github.com/agustiininicabral/continuous-testing-quality-gates.git quality-gates
+python -m pip install -e "quality-gates[dev]"
+New-Item -ItemType Directory -Force reports | Out-Null
+Push-Location quality-gates
+pytest --cov=src --cov-report=term-missing --junitxml=../reports/quality-gates-local.xml
+Pop-Location
+python -m monitor.cli --junit reports/quality-gates-local.xml --db reports/quality-gates-history.sqlite3 --out reports/quality-gates-integration
+```
+
+The companion API is an in-memory testing demo. This integration validates its
+automated test suite; it does not deploy the API as a production service.
+
+
 ## Flaky-test interpretation
 
 A test is flagged as a flaky candidate when its supplied history contains at least one pass and at least one failure. This is a heuristic, not proof of nondeterminism. A genuine code regression, environment instability, test-data collision, or dependency issue can produce the same pattern. Investigate logs and rerun under controlled conditions before classifying a test as flaky.
